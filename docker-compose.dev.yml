@@ -1,0 +1,79 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: orchestra_api_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  migrator:
+    image: gomicro/goose
+    depends_on:
+      - db
+    volumes:
+      - ./storage/migrations:/migrations
+    entrypoint: >
+      /bin/sh -c "
+        echo 'Waiting for DB...';
+        sleep 5;
+        goose postgres 'host=db user=postgres password=postgres dbname=orchestra_api_db sslmode=disable' up
+      "
+    networks:
+      - backend
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+      - migrator
+    environment:
+      CONFIG_PATH: /app/config/prod.yaml
+      ENV: dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config:ro
+    networks:
+      - backend
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  db:
+  grafana:

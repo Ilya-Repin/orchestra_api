@@ -1,0 +1,954 @@
+openapi: 3.0.3
+info:
+  title: "Orchestra API"
+  version: "1.0.0"
+  description: |
+    Микросервис API для "Клуба друзей оркестра".
+    **Все пользователи считаются равными**, а доступ из внешнего мира осуществляется через Telegram-бот.
+servers:
+  - url: http://localhost:8080/v1
+    description: Local development
+
+paths:
+  /members:
+    post:
+      summary: Регистрация нового участника клуба
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewMemberRequest'
+      responses:
+        '201':
+          description: Участник успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Получение списка участников
+      parameters:
+        - in: query
+          name: status
+          description: Фильтр по статусу (pending, approved, declined)
+          schema:
+            type: string
+            enum: [pending, approved, declined]
+      responses:
+        '200':
+          description: Список участников
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberListResponse'
+
+        '400':
+          description: Неизвестный статус
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /members/{memberId}:
+    get:
+      summary: Получение данных участника по ID
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Данные участника
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponse'
+        '404':
+          description: Участник не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Обновление данных участника (имя, email и т.д.)
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberProfileRequest'
+      responses:
+        '200':
+          description: Участник обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Участник не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Обновление статуса участника
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberStatusRequest'
+      responses:
+        '200':
+          description: Статус обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Участник не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Удаление участника клуба
+      parameters:
+        - in: path
+          name: memberId
+          required: true
+          description: UUID участника
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Участник успешно удалён
+        '404':
+          description: Участник не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events:
+    get:
+      summary: Получение списка событий
+      parameters:
+        - in: query
+          name: type
+          description: Фильтр по типу события
+          schema:
+            type: integer
+        - in: query
+          name: date_from
+          description: Начальная дата (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: date_to
+          description: Конечная дата (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+
+        '400':
+          description: Неверный входные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Создание нового события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewEventRequest'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/{eventId}:
+    get:
+      summary: Детали события по ID
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Детали события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '404':
+          description: Событие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Обновление события
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Обновлённое событие
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Событие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Удаление события
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Событие удалено
+        '404':
+          description: Событие не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/{eventId}/registration:
+    post:
+      summary: Регистрация участника на событие
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          description: ID события
+          schema:
+            type: integer
+        - in: query
+          name: memberId
+          required: true
+          description: UUID участника
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Участник успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Статус регистрации
+
+        '404':
+          description: Участник или событие не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Ошибка запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Получение информации о регистрации участника на событие
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: memberId
+          required: true
+          description: UUID участника
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о регистрации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Статус регистрации
+        '404':
+          description: Регистрация не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Отмена регистрации участника на событие
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: memberId
+          required: true
+          description: UUID участника
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Регистрация успешно удалена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Статус регистрации
+        '404':
+          description: Регистрация не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/upcoming:
+    get:
+      summary: Ближайшие события
+      responses:
+        '200':
+          description: Список ближайших событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/registered:
+    get:
+      summary: События, на которые записан участник
+      parameters:
+        - in: query
+          name: memberId
+          required: true
+          description: UUID участника
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список зарегистрированных событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '400':
+          description: Неверные входные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Участник не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/available:
+    get:
+      summary: События, доступные для регистрации конкретному участнику
+      parameters:
+        - in: query
+          name: memberId
+          required: true
+          description: UUID участника
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список доступных событий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '400':
+          description: Неверные входные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Участник не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /types:
+    get:
+      summary: Получение списка типов событий
+      responses:
+        '200':
+          description: Список типов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTypeListResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Создание нового типа события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewEventTypeRequest'
+      responses:
+        '201':
+          description: Тип создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /locations:
+    get:
+      summary: Получение списка локаций
+      responses:
+        '200':
+          description: Список локаций
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Создание новой локации
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewLocationRequest'
+      responses:
+        '201':
+          description: Локация создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        '400':
+          description: Некорректные данные запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /info/{key}:
+    get:
+      summary: Получение информации об оркестре по ключу
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Значение по ключу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrchestraInfoResponse'
+        '404':
+          description: Ключ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+components:
+  schemas:
+    NewMemberRequest:
+      type: object
+      required: [full_name, email, phone]
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          pattern: '^7\\d{10}$'
+
+    UpdateMemberProfileRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+      required: [ full_name, email, phone ]
+
+    UpdateMemberStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ pending, approved, declined ]
+      required: [ status ]
+
+    MemberResponse:
+      allOf:
+        - $ref: '#/components/schemas/NewMemberRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum: [pending, approved, declined]
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+
+    MemberListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/MemberResponse'
+
+    EventType:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+
+    NewEventTypeRequest:
+      type: object
+      required: [name, description]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    EventTypeResponse:
+      allOf:
+        - $ref: '#/components/schemas/EventType'
+
+    EventTypeListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/EventTypeResponse'
+
+    Location:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        route:
+          type: string
+        features:
+          type: string
+
+    NewLocationRequest:
+      type: object
+      required: [name, route]
+      properties:
+        name:
+          type: string
+        route:
+          type: string
+        features:
+          type: string
+
+    LocationResponse:
+      allOf:
+        - $ref: '#/components/schemas/Location'
+
+    LocationListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/LocationResponse'
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: integer
+        event_date:
+          type: string
+          format: date-time
+        location:
+          type: integer
+        capacity:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    NewEventRequest:
+      type: object
+      required: [title, event_type, event_date, location, capacity]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: integer
+        event_date:
+          type: string
+          format: date-time
+        location:
+          type: integer
+        capacity:
+          type: integer
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        event_type:
+          type: integer
+        event_date:
+          type: string
+          format: date-time
+        location:
+          type: integer
+        capacity:
+          type: integer
+
+    EventResponse:
+      allOf:
+        - $ref: '#/components/schemas/Event'
+
+    EventListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/EventResponse'
+
+    RegistrationRequest:
+      type: object
+      required: [memberId]
+      properties:
+        memberId:
+          type: string
+          format: uuid
+
+    RegistrationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: string
+          format: uuid
+        event_id:
+          type: integer
+        registration_status:
+          type: string
+          enum: [registered, cancelled, waitlist]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    OrchestraInfoResponse:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+

@@ -1,0 +1,13 @@
+env: "prod"
+storage:
+  driver: "postgres"
+  host: "db"
+  port: 5432
+  dbname: "orchestra_api_db"
+  user: "postgres"
+  password: "postgres"
+  sslmode: "disable"
+http_server:
+  port: "8080"
+  timeout: 4s
+  idle_timeout: 30s
