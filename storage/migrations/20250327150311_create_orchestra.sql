@@ -2,7 +2,6 @@
 -- +goose StatementBegin
 CREATE TABLE orchestra_info
 (
---- Например Привелегии, правила членства, история оркестра, ссылка на вступлнение в чат/приватный тг-канал, чтобы все боты отсюда подтягивали, кароч весь текст сюда
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );

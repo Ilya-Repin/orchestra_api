@@ -30,7 +30,7 @@ services:
     networks:
       - backend
 
-  server:
+  server1:
     build:
       context: .
       dockerfile: Dockerfile
@@ -41,9 +41,38 @@ services:
       CONFIG_PATH: /app/config/prod.yaml
       ENV: dev
     ports:
-      - "8080:8080"
+      - "8081:8080"
     volumes:
       - ./config:/app/config:ro
+    networks:
+      - backend
+
+  server2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+      - migrator
+    environment:
+      CONFIG_PATH: /app/config/prod.yaml
+      ENV: dev
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./config:/app/config:ro
+    networks:
+      - backend
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - server1
+      - server2
     networks:
       - backend
 

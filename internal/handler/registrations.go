@@ -55,9 +55,9 @@ func (rh *RegistrationsHandler) HandleRegister(w http.ResponseWriter, r *http.Re
 			writeError(w, http.StatusBadRequest, "member not approved")
 			rh.metrics.ApiRequestsTotal.WithLabelValues(r.Method, "400").Inc()
 		} else if errors.Is(err, service.ErrRegAlreadyExists) {
-			log.Error("registration already exists", slog.String("op", op), slog.Any("err", err))
-			writeError(w, http.StatusBadRequest, "registration already exists")
-			rh.metrics.ApiRequestsTotal.WithLabelValues(r.Method, "400").Inc()
+			log.Info("registration already exists", slog.String("op", op), slog.Any("err", err))
+			writeError(w, http.StatusCreated, "registration already exists")
+			rh.metrics.ApiRequestsTotal.WithLabelValues(r.Method, "201").Inc()
 		} else {
 			log.Error("failed to register", slog.String("op", op), slog.Any("err", err))
 			writeError(w, http.StatusInternalServerError, "failed to register")

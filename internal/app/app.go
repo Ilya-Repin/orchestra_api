@@ -24,7 +24,7 @@ type App struct {
 	eventService        *events.Service
 	registrationService *registrations.Service
 	auxService          *auxiliary.Service
-	metrics             *metrics.Metrics // Храним метрики
+	metrics             *metrics.Metrics
 }
 
 func NewApp(log *slog.Logger, db *sql.DB, appMetrics *metrics.Metrics) *App {

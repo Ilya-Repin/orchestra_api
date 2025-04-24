@@ -1,7 +1,9 @@
 global:
-  scrape_interval: 15s  # Интервал, с которым Prometheus будет собирать метрики
+  scrape_interval: 15s
 
 scrape_configs:
   - job_name: 'orchestra_api'
     static_configs:
-      - targets: ['server:8080']  # Адрес твоего API-сервиса
+      - targets:
+          - 'server1:8080'
+          - 'server2:8080'

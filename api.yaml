@@ -2,9 +2,7 @@ openapi: 3.0.3
 info:
   title: "Orchestra API"
   version: "1.0.0"
-  description: |
-    Микросервис API для "Клуба друзей оркестра".
-    **Все пользователи считаются равными**, а доступ из внешнего мира осуществляется через Telegram-бот.
+
 servers:
   - url: http://localhost:8080/v1
     description: Local development
@@ -693,7 +691,7 @@ paths:
 
   /info/{key}:
     get:
-      summary: Получение информации об оркестре по ключу
+      summary: Получение информации по ключу
       parameters:
         - in: path
           name: key
