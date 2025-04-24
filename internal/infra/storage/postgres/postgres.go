@@ -479,7 +479,7 @@ func (s *PostgresStorage) GetRegisteredEvents(ctx context.Context, memberID uuid
 		AND e.id IN (
 			SELECT reg.event_id
 			FROM registrations reg
-			WHERE reg.user_id = $1
+			WHERE reg.user_id = $1 AND reg.registration_status = 'registered'
 		)
 		ORDER BY e.event_date ASC;
 	`
